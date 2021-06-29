@@ -480,6 +480,27 @@ class TicketFieldAPI(object):
             ticket_fields.append(TicketField(**tf))
         return ticket_fields
 
+    def create_ticket_field(self, *args, **kwargs):
+        """Creates a ticket field"""
+        url = "admin/ticket_fields"
+        return TicketField(**self._api._post(url, data=json.dumps(kwargs)))
+
+    def get_ticket_field(self, ticket_field_id):
+        """Fetches the ticket field for the given ticket field ID"""
+        url = "admin/ticket_fields/%s" % ticket_field_id
+        return TicketField(**self._api._get(url))
+
+    def update_ticket_field(self, ticket_field_id, **kwargs):
+        """Updates a ticket field"""
+        url = "admin/ticket_fields/%s" % ticket_field_id
+        field = self._api._put(url, data=json.dumps(kwargs))
+        return TicketField(**field)
+
+    def delete_ticket_field(self, ticket_field_id):
+        """Delete the ticket field for the given ticket field ID"""
+        url = "admin/ticket_fields/%d" % ticket_field_id
+        self._api._delete(url)
+
 
 class AgentAPI(object):
     def __init__(self, api):
@@ -518,6 +539,11 @@ class AgentAPI(object):
             page += 1
 
         return [Agent(**a) for a in agents]
+
+    def create_agent(self, *args, **kwargs):
+        """Creates am agent"""
+        url = "agents"
+        return Agent(**self._api._post(url, data=json.dumps(kwargs)))
 
     def get_agent(self, agent_id):
         """Fetches the agent for the given agent ID"""
