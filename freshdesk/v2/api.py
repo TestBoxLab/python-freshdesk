@@ -14,6 +14,7 @@ from freshdesk.v2.errors import (
 )
 from freshdesk.v2.models import (
     Agent,
+    Automation,
     Comment,
     Company,
     Contact,
@@ -708,6 +709,37 @@ class SolutionAPI(object):
       self.categories = SolutionCategoryAPI(api)
       self.folders = SolutionFolderAPI(api)
       self.articles = SolutionArticleAPI(api)
+
+
+class AutomationAPI(object):
+    def __init__(self, api):
+        self._api = api
+
+    def get_automation(self, automation_type, automation_id):
+        url = "automations/%d/rules/%d" % (automation_type, automation_id)
+        automation = self._api._get(url)
+        return Automation(_automation_type=automation_type, **automation)
+
+    def delete_automation(self, automation_type, automation_id):
+        url = "automations/%d/rules/%d" % (automation_type, automation_id)
+        self._api._delete(url)
+
+    def create_automation_rule(self, automation_type, *, name, conditions, actions, **kwargs):
+        url = "automations/%d/rules" % (automation_type,)
+        data = {
+            'name': name,
+            'conditions': conditions,
+            'actions': actions,
+            **kwargs
+        }
+        automation = self._api._post(url, data=json.dumps(data))
+        return Automation(_automation_type_id=automation_type, **automation)
+
+    def update_automation_rule(self, automation_type, automation_id, **kwargs):
+        url = "automations/%d/rules/%d" % (automation_type, automation_id)
+        automation = self._api._put(url, data=json.dumps(kwargs))
+        return Automation(_automation_type_id=automation_type, **automation)
+
 
 class API(object):
     def __init__(self, domain, api_key, verify=True, proxies=None):

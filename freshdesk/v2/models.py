@@ -166,3 +166,16 @@ class SolutionArticle(FreshdeskModel):
         return _p[self._status]
 
 
+class Automation(FreshdeskModel):
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return "<Automation '{}' #{}>".format(self.name, self.id)
+
+    @property
+    def automation_type(self):
+        _p = {1:'ticket_creation',
+              3:'time_triggers',
+              4:'ticket_updates'}
+        return _p[self._automation_type_id]
