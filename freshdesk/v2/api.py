@@ -724,16 +724,25 @@ class AutomationAPI(object):
         url = "automations/%d/rules/%d" % (automation_type, automation_id)
         self._api._delete(url)
 
-    def create_automation_rule(self, automation_type, *, name, conditions, actions, **kwargs):
+    def _create_automation_rule(self, automation_type, *, name, conditions, actions, **kwargs):
         url = "automations/%d/rules" % (automation_type,)
         data = {
             'name': name,
-            'conditions': conditions,
-            'actions': actions,
+            'conditions': conditions or [],
+            'actions': actions or [],
             **kwargs
         }
         automation = self._api._post(url, data=json.dumps(data))
         return Automation(_automation_type_id=automation_type, **automation)
+
+    def create_routing(self, *, name, conditions, actions, **kwargs):
+        return self._create_automation_rule(1, name=name, conditions=conditions, actions=actions, **kwargs)
+
+    def create_timed_automation(self, *, name, conditions, actions, **kwargs):
+        return self._create_automation_rule(3, name=name, conditions=conditions, actions=actions, **kwargs)
+
+    def create_trigger(self, *, name, conditions, actions, **kwargs):
+        return self._create_automation_rule(4, name=name, conditions=conditions, actions=actions, **kwargs)
 
     def update_automation_rule(self, automation_type, automation_id, **kwargs):
         url = "automations/%d/rules/%d" % (automation_type, automation_id)
@@ -771,6 +780,7 @@ class API(object):
         self.ticket_fields = TicketFieldAPI(self)
         self.time_entries = TimeEntryAPI(self)
         self.solutions = SolutionAPI(self)
+        self.automations = AutomationAPI(self)
 
         if domain.find("freshdesk.com") < 0:
             raise AttributeError("Freshdesk v2 API works only via Freshdesk" "domains and not via custom CNAMEs")
