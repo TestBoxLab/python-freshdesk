@@ -179,3 +179,11 @@ class Automation(FreshdeskModel):
               3:'time_triggers',
               4:'ticket_updates'}
         return _p[self._automation_type_id]
+
+
+class Skill(FreshdeskModel):
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return "<Skill '{}' #{}>".format(self.name, self.id)

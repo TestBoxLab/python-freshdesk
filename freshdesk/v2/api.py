@@ -24,6 +24,7 @@ from freshdesk.v2.models import (
     Ticket,
     TicketField,
     TimeEntry,
+    Skill,
     SolutionCategory,
     SolutionFolder,
     SolutionArticle,
@@ -711,6 +712,20 @@ class SolutionAPI(object):
       self.articles = SolutionArticleAPI(api)
 
 
+class SkillAPI(object):
+    def __init__(self, api):
+        self._api = api
+
+    def create_skill(self, *, name, **kwargs):
+        url = "skills"
+        data = {
+            'name': name,
+            **kwargs
+        }
+        skill = self._api.post(url, data=json.dumps(data))
+        return Skill(**skill)
+
+
 class AutomationAPI(object):
     def __init__(self, api):
         self._api = api
@@ -781,6 +796,7 @@ class API(object):
         self.time_entries = TimeEntryAPI(self)
         self.solutions = SolutionAPI(self)
         self.automations = AutomationAPI(self)
+        self.skills = SkillAPI(self)
 
         if domain.find("freshdesk.com") < 0:
             raise AttributeError("Freshdesk v2 API works only via Freshdesk" "domains and not via custom CNAMEs")
