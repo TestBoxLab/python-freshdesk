@@ -722,8 +722,16 @@ class SkillAPI(object):
             'name': name,
             **kwargs
         }
-        skill = self._api.post(url, data=json.dumps(data))
+        skill = self._api._post(url, data=json.dumps(data))
         return Skill(**skill)
+
+    def list_all_skills(self):
+        skills = self._api._get("skills")
+        return [Skill(**skill) for skill in skills]
+
+    def delete_skill(self, skill_id):
+        url = "skills/%d" % (skill_id,)
+        self._api._delete(url)
 
 
 class AutomationAPI(object):
@@ -750,19 +758,24 @@ class AutomationAPI(object):
         automation = self._api._post(url, data=json.dumps(data))
         return Automation(_automation_type_id=automation_type, **automation)
 
-    def create_routing(self, *, name, conditions, actions, **kwargs):
+    def create_trigger(self, *, name, conditions, actions, **kwargs):
         return self._create_automation_rule(1, name=name, conditions=conditions, actions=actions, **kwargs)
 
     def create_timed_automation(self, *, name, conditions, actions, **kwargs):
         return self._create_automation_rule(3, name=name, conditions=conditions, actions=actions, **kwargs)
 
-    def create_trigger(self, *, name, conditions, actions, **kwargs):
-        return self._create_automation_rule(4, name=name, conditions=conditions, actions=actions, **kwargs)
+    def create_update_automation(self, *, name, conditions, actions, performer, **kwargs):
+        return self._create_automation_rule(4, name=name, conditions=conditions, actions=actions, performer=performer, **kwargs)
 
     def update_automation_rule(self, automation_type, automation_id, **kwargs):
         url = "automations/%d/rules/%d" % (automation_type, automation_id)
         automation = self._api._put(url, data=json.dumps(kwargs))
         return Automation(_automation_type_id=automation_type, **automation)
+
+    def list_all_automation_rules(self, automation_type):
+        url = "automations/%d/rules" % (automation_type)
+        automations = self._api._get(url)
+        return [Automation(_automation_type_id=automation_type, **automation) for automation in automations]
 
 
 class API(object):
