@@ -25,6 +25,7 @@ from freshdesk.v2.models import (
     TicketField,
     TimeEntry,
     Skill,
+    SLA,
     SolutionCategory,
     SolutionFolder,
     SolutionArticle,
@@ -37,21 +38,24 @@ class TicketAPI(object):
 
     def get_ticket(self, ticket_id, *include):
         """
-            Fetches the ticket for the given ticket ID
-            You can pass strings for the include parameter and they'll be included as include params to the request
-            ex: get_ticket(some_id, "stats", "conversations", "requester", "company") will result in the following request:
-            tickets/[some_id]?include=stats,conversations,requester,company
+        Fetches the ticket for the given ticket ID
+        You can pass strings for the include parameter and they'll be included as include params to the request
+        ex: get_ticket(some_id, "stats", "conversations", "requester", "company") will result in the following request:
+        tickets/[some_id]?include=stats,conversations,requester,company
         """
-        url = "tickets/%d%s" % (ticket_id, "?include=%s" % ",".join(include) if include else "")
+        url = "tickets/%d%s" % (
+            ticket_id,
+            "?include=%s" % ",".join(include) if include else "",
+        )
         ticket = self._api._get(url)
         return Ticket(**ticket)
 
     def create_ticket(self, subject, **kwargs):
         """
-            Creates a ticket
-            To create ticket with attachments,
-            pass a key 'attachments' with value as list of fully qualified file paths in string format.
-            ex: attachments = ('/path/to/attachment1', '/path/to/attachment2')
+        Creates a ticket
+        To create ticket with attachments,
+        pass a key 'attachments' with value as list of fully qualified file paths in string format.
+        ex: attachments = ('/path/to/attachment1', '/path/to/attachment2')
         """
 
         url = "tickets"
@@ -77,7 +81,9 @@ class TicketAPI(object):
 
         for attachment in attachments:
             file_name = attachment.split("/")[-1:][0]
-            multipart_data.append(("attachments[]", (file_name, open(attachment, "rb"), None)))
+            multipart_data.append(
+                ("attachments[]", (file_name, open(attachment, "rb"), None))
+            )
 
         for key, value in data.copy().items():
             # Reformat ticket properties to work with the multipart/form-data encoding.
@@ -92,10 +98,14 @@ class TicketAPI(object):
             del data["custom_fields"]
 
         # Override the content type so that `requests` correctly sets it to multipart/form-data instead of JSON.
-        ticket = self._api._post(url, data=data, files=multipart_data, headers={"Content-Type": None})
+        ticket = self._api._post(
+            url, data=data, files=multipart_data, headers={"Content-Type": None}
+        )
         return ticket
 
-    def create_outbound_email(self, subject, description, email, email_config_id, **kwargs):
+    def create_outbound_email(
+        self, subject, description, email, email_config_id, **kwargs
+    ):
         """Creates an outbound email"""
         url = "tickets/outbound_email"
         priority = kwargs.get("priority", 1)
@@ -151,13 +161,15 @@ class TicketAPI(object):
 
         page = kwargs.get("page", 1)
         per_page = kwargs.get("per_page", 100)
-        
+
         tickets = []
 
         # Skip pagination by looping over each page and adding tickets if 'page' key is not in kwargs.
         # else return the requested page and break the loop
         while True:
-            this_page = self._api._get(url + "page=%d&per_page=%d" % (page, per_page), kwargs)
+            this_page = self._api._get(
+                url + "page=%d&per_page=%d" % (page, per_page), kwargs
+            )
             tickets += this_page
             if len(this_page) < per_page or "page" in kwargs:
                 break
@@ -193,7 +205,9 @@ class TicketAPI(object):
 
         tickets = []
         while True:
-            this_page = self._api._get(url + 'page={}&query="{}"'.format(page, query), kwargs)
+            this_page = self._api._get(
+                url + 'page={}&query="{}"'.format(page, query), kwargs
+            )
             this_page = this_page["results"]
             tickets += this_page
             if len(this_page) < per_page or page == 10 or "page" in kwargs:
@@ -217,7 +231,9 @@ class CommentAPI(object):
         # Skip pagination by looping over each page and adding comments if 'page' key is not in kwargs.
         # else return the requested page and break the loop
         while True:
-            this_page = self._api._get(url + "page=%d&per_page=%d" % (page, per_page), kwargs)
+            this_page = self._api._get(
+                url + "page=%d&per_page=%d" % (page, per_page), kwargs
+            )
             comments += this_page
             if len(this_page) < per_page or "page" in kwargs:
                 break
@@ -249,7 +265,9 @@ class GroupAPI(object):
 
         groups = []
         while True:
-            this_page = self._api._get(url + "page=%d&per_page=%d" % (page, per_page), kwargs)
+            this_page = self._api._get(
+                url + "page=%d&per_page=%d" % (page, per_page), kwargs
+            )
             groups += this_page
             if len(this_page) < per_page or "page" in kwargs:
                 break
@@ -298,7 +316,9 @@ class ContactAPI(object):
         # Skip pagination by looping over each page and adding tickets if 'page' key is not in kwargs.
         # else return the requested page and break the loop
         while True:
-            this_page = self._api._get(url + "page=%d&per_page=%d" % (page, per_page), kwargs)
+            this_page = self._api._get(
+                url + "page=%d&per_page=%d" % (page, per_page), kwargs
+            )
             contacts += this_page
             if len(this_page) < per_page or "page" in kwargs:
                 break
@@ -375,7 +395,9 @@ class CompanyAPI(object):
         # Skip pagination by looping over each page and adding companies if 'page' key is not in kwargs.
         # else return the requested page and break the loop
         while True:
-            this_page = self._api._get(url + "page=%d&per_page=%d" % (page, per_page), kwargs)
+            this_page = self._api._get(
+                url + "page=%d&per_page=%d" % (page, per_page), kwargs
+            )
             companies += this_page
             if len(this_page) < per_page or "page" in kwargs:
                 break
@@ -400,7 +422,9 @@ class CompanyAPI(object):
 
         companies = []
         while True:
-            this_page = self._api._get(url + 'page={}&query="{}"'.format(page, query), kwargs)
+            this_page = self._api._get(
+                url + 'page={}&query="{}"'.format(page, query), kwargs
+            )
             this_page = this_page["results"]
             companies += this_page
             if len(this_page) < per_page or page == 10 or "page" in kwargs:
@@ -408,12 +432,12 @@ class CompanyAPI(object):
             page += 1
 
         return [Company(**c) for c in companies]
-    
+
     def delete_company(self, company_id):
         """Delete the company for the given company ID"""
         url = "companies/%d" % company_id
         self._api._delete(url)
-    
+
     def create_company(self, *args, **kwargs):
         """Creates a company"""
         url = "companies"
@@ -422,6 +446,7 @@ class CompanyAPI(object):
     def update_company(self, company_id, **data):
         url = "companies/%d" % company_id
         return Company(**self._api._put(url, data=json.dumps(data)))
+
 
 class RoleAPI(object):
     def __init__(self, api):
@@ -457,7 +482,9 @@ class TimeEntryAPI(object):
         # Skip pagination by looping over each page and adding tickets if 'page' key is not in kwargs.
         # else return the requested page and break the loop
         while True:
-            this_page = self._api._get(url + 'page={}&per_page={}'.format(page, per_page), kwargs)
+            this_page = self._api._get(
+                url + "page={}&per_page={}".format(page, per_page), kwargs
+            )
             time_entries += this_page
             if len(this_page) < per_page or "page" in kwargs:
                 break
@@ -534,7 +561,9 @@ class AgentAPI(object):
         # Skip pagination by looping over each page and adding tickets if 'page' key is not in kwargs.
         # else return the requested page and break the loop
         while True:
-            this_page = self._api._get(url + "page=%d&per_page=%d" % (page, per_page), kwargs)
+            this_page = self._api._get(
+                url + "page=%d&per_page=%d" % (page, per_page), kwargs
+            )
             agents += this_page
             if len(this_page) < per_page or "page" in kwargs:
                 break
@@ -581,29 +610,29 @@ class SolutionCategoryAPI(object):
     def get_category(self, category_id):
         url = "solutions/categories/%d" % category_id
         return SolutionCategory(**self._api._get(url))
-    
+
     def create_category(self, *args, **kwargs):
         url = "solutions/categories"
         return SolutionCategory(**self._api._post(url, data=json.dumps(kwargs)))
-    
+
     def create_category_translation(self, category_id, lang_code, *args, **kwargs):
-        url = "solutions/categories/%d/%s" %(category_id, lang_code)
+        url = "solutions/categories/%d/%s" % (category_id, lang_code)
         return SolutionCategory(**self._api._post(url, data=json.dumps(kwargs)))
-    
+
     def update_category(self, category_id, *args, **kwargs):
         url = "solutions/categories/%d" % category_id
         return SolutionCategory(**self._api._put(url, data=json.dumps(kwargs)))
-    
+
     def update_category_translation(self, category_id, lang_code, *args, **kwargs):
-        url = "solutions/categories/%d/%s" %(category_id, lang_code)
+        url = "solutions/categories/%d/%s" % (category_id, lang_code)
         return SolutionCategory(**self._api._put(url, data=json.dumps(kwargs)))
-    
+
     def delete_category(self, category_id):
-        url = 'solutions/categories/%s' % category_id
+        url = "solutions/categories/%s" % category_id
         self._api._delete(url)
 
     def get_category_translated(self, category_id, lang_code):
-        url = "solutions/categories/%d/%s" % (category_id,lang_code)
+        url = "solutions/categories/%d/%s" % (category_id, lang_code)
         return SolutionCategory(**self._api._get(url))
 
 
@@ -628,28 +657,28 @@ class SolutionFolderAPI(object):
     def get_folder_translated(self, folder_id, lang_code):
         url = "solutions/folders/%d/%s" % (folder_id, lang_code)
         return SolutionFolder(**self._api._get(url))
-    
+
     def create_folder(self, category_id, *args, **kwargs):
         url = "solutions/categories/%s/folders" % category_id
         return SolutionFolder(**self._api._post(url, data=json.dumps(kwargs)))
-    
+
     def create_folder_translation(self, folder_id, lang_code, *args, **kwargs):
-        url = "solutions/folders/%s/%s" % ( folder_id, lang_code)
+        url = "solutions/folders/%s/%s" % (folder_id, lang_code)
         return SolutionFolder(**self._api._post(url, data=json.dumps(kwargs)))
-    
+
     def update_folder(self, folder_id, *args, **kwargs):
         url = "solutions/folders/%s" % (folder_id)
         data = {}
         data.update(kwargs)
         return SolutionFolder(**self._api._put(url, data=json.dumps(data)))
-    
+
     def update_folder_translation(self, folder_id, lang_code, *args, **kwargs):
         url = "solutions/folders/%s/%s" % (folder_id, lang_code)
         print(url)
         data = {}
         data.update(kwargs)
         return SolutionFolder(**self._api._put(url, data=json.dumps(data)))
-    
+
     def delete_folder(self, folder_id):
         url = "solutions/folders/%s" % (folder_id)
         self._api._delete(url)
@@ -664,7 +693,7 @@ class SolutionArticleAPI(object):
         return SolutionArticle(**self._api._get(url))
 
     def get_article_translated(self, article_id, language_code):
-        url = "solutions/articles/%d/%s" % (article_id,language_code)
+        url = "solutions/articles/%d/%s" % (article_id, language_code)
         return SolutionArticle(**self._api._get(url))
 
     def list_from_folder(self, id):
@@ -676,40 +705,60 @@ class SolutionArticleAPI(object):
         url = "solutions/folders/%d/articles/%s" % (id, language_code)
         articles = self._api._get(url)
         return [SolutionArticle(**a) for a in articles]
-    
+
     def create_article(self, folder_id, *args, **kwargs):
-        url = 'solutions/folders/%s/articles' % folder_id
+        url = "solutions/folders/%s/articles" % folder_id
         return SolutionArticle(**self._api._post(url, data=json.dumps(kwargs)))
 
     def create_article_translation(self, article_id, lang, *args, **kwargs):
-        url = 'solutions/articles/%s/%s' %( article_id, lang )
+        url = "solutions/articles/%s/%s" % (article_id, lang)
         return SolutionArticle(**self._api._post(url, data=json.dumps(kwargs)))
 
     def update_article(self, article_id, *args, **kwargs):
-        url = 'solutions/articles/%s' % article_id
+        url = "solutions/articles/%s" % article_id
         return SolutionArticle(**self._api._put(url, data=json.dumps(kwargs)))
 
     def update_article_translation(self, article_id, lang, *args, **kwargs):
-        url = 'solutions/articles/%s/%s' % ( article_id, lang )
+        url = "solutions/articles/%s/%s" % (article_id, lang)
         return SolutionArticle(**self._api._put(url, data=json.dumps(kwargs)))
 
     def delete_article(self, article_id):
-        url = 'solutions/articles/%s' % article_id
+        url = "solutions/articles/%s" % article_id
         self._api._delete(url)
 
     def search(self, keyword):
-        url = 'search/solutions?term=%s' % keyword
+        url = "search/solutions?term=%s" % keyword
         articles = []
         for r in self._api._get(url):
             articles.append(SolutionArticle(**r))
         return articles
 
+
 class SolutionAPI(object):
     def __init__(self, api):
-      self._api = api
-      self.categories = SolutionCategoryAPI(api)
-      self.folders = SolutionFolderAPI(api)
-      self.articles = SolutionArticleAPI(api)
+        self._api = api
+        self.categories = SolutionCategoryAPI(api)
+        self.folders = SolutionFolderAPI(api)
+        self.articles = SolutionArticleAPI(api)
+
+
+class SLAAPI(object):
+    def __init__(self, api):
+        self._api = api
+
+    def create_sla(self, *, name, sla_target, applicable_to):
+        return SLAAPI(
+            **self._api._post(
+                "sla_policies",
+                data=json.dumps(
+                    {
+                        "name": name,
+                        "sla_target": sla_target,
+                        "appplicable_to": applicable_to,
+                    }
+                ),
+            )
+        )
 
 
 class SkillAPI(object):
@@ -718,10 +767,7 @@ class SkillAPI(object):
 
     def create_skill(self, *, name, **kwargs):
         url = "skills"
-        data = {
-            'name': name,
-            **kwargs
-        }
+        data = {"name": name, **kwargs}
         skill = self._api._post(url, data=json.dumps(data))
         return Skill(**skill)
 
@@ -747,25 +793,40 @@ class AutomationAPI(object):
         url = "automations/%d/rules/%d" % (automation_type, automation_id)
         self._api._delete(url)
 
-    def _create_automation_rule(self, automation_type, *, name, conditions, actions, **kwargs):
+    def _create_automation_rule(
+        self, automation_type, *, name, conditions, actions, **kwargs
+    ):
         url = "automations/%d/rules" % (automation_type,)
         data = {
-            'name': name,
-            'conditions': conditions or [],
-            'actions': actions or [],
-            **kwargs
+            "name": name,
+            "conditions": conditions or [],
+            "actions": actions or [],
+            **kwargs,
         }
         automation = self._api._post(url, data=json.dumps(data))
         return Automation(_automation_type_id=automation_type, **automation)
 
     def create_trigger(self, *, name, conditions, actions, **kwargs):
-        return self._create_automation_rule(1, name=name, conditions=conditions, actions=actions, **kwargs)
+        return self._create_automation_rule(
+            1, name=name, conditions=conditions, actions=actions, **kwargs
+        )
 
     def create_timed_automation(self, *, name, conditions, actions, **kwargs):
-        return self._create_automation_rule(3, name=name, conditions=conditions, actions=actions, **kwargs)
+        return self._create_automation_rule(
+            3, name=name, conditions=conditions, actions=actions, **kwargs
+        )
 
-    def create_update_automation(self, *, name, conditions, actions, performer, **kwargs):
-        return self._create_automation_rule(4, name=name, conditions=conditions, actions=actions, performer=performer, **kwargs)
+    def create_update_automation(
+        self, *, name, conditions, actions, performer, **kwargs
+    ):
+        return self._create_automation_rule(
+            4,
+            name=name,
+            conditions=conditions,
+            actions=actions,
+            performer=performer,
+            **kwargs
+        )
 
     def update_automation_rule(self, automation_type, automation_id, **kwargs):
         url = "automations/%d/rules/%d" % (automation_type, automation_id)
@@ -775,7 +836,10 @@ class AutomationAPI(object):
     def list_all_automation_rules(self, automation_type):
         url = "automations/%d/rules" % (automation_type)
         automations = self._api._get(url)
-        return [Automation(_automation_type_id=automation_type, **automation) for automation in automations]
+        return [
+            Automation(_automation_type_id=automation_type, **automation)
+            for automation in automations
+        ]
 
 
 class API(object):
@@ -812,7 +876,10 @@ class API(object):
         self.skills = SkillAPI(self)
 
         if domain.find("freshdesk.com") < 0:
-            raise AttributeError("Freshdesk v2 API works only via Freshdesk" "domains and not via custom CNAMEs")
+            raise AttributeError(
+                "Freshdesk v2 API works only via Freshdesk"
+                "domains and not via custom CNAMEs"
+            )
         self.domain = domain
 
     def _action(self, req):
@@ -838,7 +905,9 @@ class API(object):
         elif req.status_code == 429:
             raise FreshdeskRateLimited(
                 "429 Rate Limit Exceeded: API rate-limit has been reached until {} seconds. See "
-                "http://freshdesk.com/api#ratelimit".format(req.headers.get("Retry-After"))
+                "http://freshdesk.com/api#ratelimit".format(
+                    req.headers.get("Retry-After")
+                )
             )
         elif 500 < req.status_code < 600:
             raise FreshdeskServerError("{}: Server Error".format(req.status_code))

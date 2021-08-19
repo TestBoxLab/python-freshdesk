@@ -187,3 +187,10 @@ class Skill(FreshdeskModel):
 
     def __repr__(self):
         return "<Skill '{}' #{}>".format(self.name, self.id)
+
+class SLA(FreshdeskModel):
+    def __repr__(self):
+        return "<SLA '{}' #{}>".format(self.name, self.id)
+
+    def __str__(self):
+        return self.name
