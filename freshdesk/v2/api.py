@@ -769,19 +769,10 @@ class SLAAPI(object):
 
         return slas
     
-    def create_sla(self, *, name, sla_target, applicable_to):
-        return SLAAPI(
-            **self._api._post(
-                "sla_policies",
-                data=json.dumps(
-                    {
-                        "name": name,
-                        "sla_target": sla_target,
-                        "appplicable_to": applicable_to,
-                    }
-                ),
-            )
-        )
+    def create_sla(self, *args, **kwargs):
+        url = "sla_policies"
+        policy = self._api._post(url, data=json.dumps(kwargs))
+        return SLA(**policy)
 
 
 class SkillAPI(object):
