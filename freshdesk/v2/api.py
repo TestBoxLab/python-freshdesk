@@ -2,6 +2,7 @@ import json
 
 import requests
 from requests import HTTPError
+import datetime
 
 from freshdesk.v2.errors import (
     FreshdeskAccessDenied,
@@ -24,6 +25,7 @@ from freshdesk.v2.models import (
     Ticket,
     TicketField,
     TimeEntry,
+    ScenarioAutomation,
     Skill,
     SLA,
     SolutionCategory,
@@ -278,6 +280,11 @@ class GroupAPI(object):
     def get_group(self, group_id):
         url = "groups/%s" % group_id
         return Group(**self._api._get(url))
+    
+    def create_group(self, *args, **kwargs):
+        """Creates a group"""
+        url = "groups"
+        return Group(**self._api._post(url, data=json.dumps(kwargs)))
 
 
 class ContactAPI(object):
@@ -498,16 +505,20 @@ class TicketFieldAPI(object):
     def __init__(self, api):
         self._api = api
 
-    def list_ticket_fields(self, **kwargs):
+    def list_ticket_fields(self, raw_json=False, **kwargs):
         url = "ticket_fields"
         ticket_fields = []
 
         if "type" in kwargs:
             url = "{}?type={}".format(url, kwargs["type"])
 
-        for tf in self._api._get(url):
-            ticket_fields.append(TicketField(**tf))
-        return ticket_fields
+        if raw_json:
+            return self._api._get(url)
+        else:
+            for tf in self._api._get(url):
+                ticket_fields.append(TicketField(**tf))
+
+            return ticket_fields
 
     def create_ticket_field(self, *args, **kwargs):
         """Creates a ticket field"""
@@ -572,7 +583,7 @@ class AgentAPI(object):
         return [Agent(**a) for a in agents]
 
     def create_agent(self, *args, **kwargs):
-        """Creates am agent"""
+        """Creates an agent"""
         url = "agents"
         return Agent(**self._api._post(url, data=json.dumps(kwargs)))
 
@@ -746,6 +757,18 @@ class SLAAPI(object):
     def __init__(self, api):
         self._api = api
 
+    def list_sla_policies(self, raw_json=False, **kwargs):
+        url = "sla_policies"
+        slas = []
+
+        if raw_json:
+            return self._api._get(url)
+        else:
+            for s in self._api._get(url):
+                slas.append(SLA(**s))
+
+        return slas
+    
     def create_sla(self, *, name, sla_target, applicable_to):
         return SLAAPI(
             **self._api._post(
@@ -770,6 +793,18 @@ class SkillAPI(object):
         data = {"name": name, **kwargs}
         skill = self._api._post(url, data=json.dumps(data))
         return Skill(**skill)
+    
+    def list_skills(self, raw_json=False, **kwargs):
+        url = "skills"
+        skills = []
+
+        if raw_json:
+            return self._api._get(url)
+        else:
+            for s in self._api._get(url):
+                skills.append(Skill(**s))
+
+        return skills
 
     def list_all_skills(self):
         skills = self._api._get("skills")
@@ -832,6 +867,47 @@ class AutomationAPI(object):
         url = "automations/%d/rules/%d" % (automation_type, automation_id)
         automation = self._api._put(url, data=json.dumps(kwargs))
         return Automation(_automation_type_id=automation_type, **automation)
+    
+    def list_automations(self, raw_json=False, **kwargs):
+        url = "automations/%d/rules"
+        automations = {}
+        automation_types = {1:'ticket_creation',
+                            3:'time_triggers',
+                            4:'ticket_updates'}
+        
+        for automation_key, automation_type in automation_types.items():
+            if raw_json:
+                automations[automation_type] = self._api._get(url % automation_key)
+            else:
+                automations[automation_type] = []
+                for a in self._api._get(url % automation_key):
+                    automations[automation_type].append(Automation(**a))
+                    
+        return automations
+
+
+class ScenarioAutomationAPI(object):
+    def __init__(self, api):
+        self._api = api
+
+    def list_scenario_automations(self, raw_json=False, **kwargs):
+        url = "scenario_automations?"
+        page = kwargs.get("page", 1)
+        per_page = kwargs.get("per_page", 100)
+
+        scenario_automations = []
+        while True:
+            this_page = self._api._get(url + "page=%d&per_page=%d" % (page, per_page), kwargs)
+            scenario_automations += this_page
+            if len(this_page) < per_page or "page" in kwargs:
+                break
+            page += 1
+
+        if (raw_json):
+            return scenario_automations
+        else:
+            time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+            return [ScenarioAutomation(**sa, created_at=time, updated_at=time) for sa in scenario_automations]
 
     def list_all_automation_rules(self, automation_type):
         url = "automations/%d/rules" % (automation_type)
@@ -873,7 +949,9 @@ class API(object):
         self.time_entries = TimeEntryAPI(self)
         self.solutions = SolutionAPI(self)
         self.automations = AutomationAPI(self)
+        self.scenario_automations = ScenarioAutomationAPI(self)
         self.skills = SkillAPI(self)
+        self.sla_policies = SLAAPI(self)
 
         if domain.find("freshdesk.com") < 0:
             raise AttributeError(

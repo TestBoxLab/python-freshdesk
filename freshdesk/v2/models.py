@@ -29,7 +29,10 @@ class TicketField(FreshdeskModel):
         return self.name
 
     def __repr__(self):
-        return "<TicketField '{}' '{}'>".format(self.name, self.description)
+        if hasattr(self, "description"):
+            return "<TicketField '{}' '{}'>".format(self.name, self.description)
+        else:
+            return "<TicketField '{}'>".format(self.name)
 
 
 class Ticket(FreshdeskModel):
@@ -179,6 +182,14 @@ class Automation(FreshdeskModel):
               3:'time_triggers',
               4:'ticket_updates'}
         return _p[self._automation_type_id]
+
+
+class ScenarioAutomation(FreshdeskModel):
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return "<Scenario Automation '{}' #{}>".format(self.name, self.id)
 
 
 class Skill(FreshdeskModel):
