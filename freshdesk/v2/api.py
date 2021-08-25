@@ -286,6 +286,11 @@ class GroupAPI(object):
         url = "groups"
         return Group(**self._api._post(url, data=json.dumps(kwargs)))
 
+    def delete_group(self, group_id):
+        """Deletes a group"""
+        url = "groups/%d" % group_id
+        self._api._delete(url)
+
 
 class ContactAPI(object):
     def __init__(self, api):
