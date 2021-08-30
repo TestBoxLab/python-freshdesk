@@ -18,7 +18,9 @@ from freshdesk.v2.models import (
     Automation,
     Comment,
     Company,
+    CompanyField,
     Contact,
+    ContactField,
     Customer,
     Group,
     Role,
@@ -376,6 +378,21 @@ class ContactAPI(object):
         contact = self._api._put(url, data=json.dumps(data))
         return self._api.agents.get_agent(contact["agent"]["id"])
 
+    def list_contact_fields(self, raw_json=False, **kwargs):
+        url = "contact_fields"
+        contact_fields = []
+
+        if "type" in kwargs:
+            url = "{}?type={}".format(url, kwargs["type"])
+
+        if raw_json:
+            return self._api._get(url)
+        else:
+            for tf in self._api._get(url):
+                contact_fields.append(ContactField(**tf))
+
+            return contact_fields
+
 
 class CustomerAPI(object):
     def __init__(self, api):
@@ -459,6 +476,21 @@ class CompanyAPI(object):
         url = "companies/%d" % company_id
         return Company(**self._api._put(url, data=json.dumps(data)))
 
+    def list_company_fields(self, raw_json=False, **kwargs):
+        url = "company_fields"
+        company_fields = []
+
+        if "type" in kwargs:
+            url = "{}?type={}".format(url, kwargs["type"])
+
+        if raw_json:
+            return self._api._get(url)
+        else:
+            for tf in self._api._get(url):
+                company_fields.append(CompanyField(**tf))
+
+            return company_fields
+        
 
 class RoleAPI(object):
     def __init__(self, api):

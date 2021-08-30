@@ -35,6 +35,28 @@ class TicketField(FreshdeskModel):
             return "<TicketField '{}'>".format(self.name)
 
 
+class CompanyField(FreshdeskModel):
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        if hasattr(self, "description"):
+            return "<CompanyField '{}' '{}'>".format(self.name, self.description)
+        else:
+            return "<CompanyField '{}'>".format(self.name)
+
+
+class ContactField(FreshdeskModel):
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        if hasattr(self, "description"):
+            return "<ContactField '{}' '{}'>".format(self.name, self.description)
+        else:
+            return "<ContactField '{}'>".format(self.name)
+
+
 class Ticket(FreshdeskModel):
     def __str__(self):
         return self.subject
