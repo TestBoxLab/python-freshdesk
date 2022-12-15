@@ -2,6 +2,7 @@ import json
 
 import requests
 from requests import HTTPError
+from requests.adapters import HTTPAdapter, Retry
 
 from freshdesk.v2.errors import (
     FreshdeskAccessDenied,
@@ -728,6 +729,11 @@ class API(object):
         self._session.verify = verify
         self._session.proxies = proxies
         self._session.headers = {"Content-Type": "application/json"}
+        retries = Retry(total=3,
+                        backoff_factor=2,
+                        status_forcelist=[500],
+                        )
+        self._session.mount("https://", HTTPAdapter(max_retries=retries))
 
         self.tickets = TicketAPI(self)
         self.comments = CommentAPI(self)
